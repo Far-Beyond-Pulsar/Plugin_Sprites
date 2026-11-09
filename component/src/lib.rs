@@ -6,18 +6,15 @@
 //! - Its row ([`SpriteSourceRow`]): the sprite passes' row SceneDB derives
 //!   from the authored value, with the image's texture store slot; the
 //!   plugin's join places it at the owner (`helio_pass_sprite_batch::scene_rows`).
-//! - The registrations of the plugin's Helio feature
-//!   (`helio_pass_sprite_batch::SpriteFeature`), its scene rows and how a
-//!   sprite takes in a loaded image, with the engine.
+//! - What the engine runs for them: the plugin's Helio feature
+//!   ([`render_features`]: `helio_pass_sprite_batch::SpriteFeature`), its
+//!   scene rows ([`register_columns`], [`derivation`]) and how a sprite
+//!   takes in a loaded image ([`register_texture_binding`]).
 //!
-//! Everything registers through `inventory` once the crate is linked: hosts link it
-//! without naming it (a game built for a project links the runtime modules
-//! of the plugins its `Pulsar.toml` enables, the editor every installed
-//! plugin through `installed_plugins`; `pulsar_plugins`) and know no sprite type.
-
-// The plugin's descriptor (`../pulsar-plugin.toml`): linking this crate
-// installs the plugin; a project enables it or not (`pulsar_plugins`).
-pulsar_plugins::installed!("../pulsar-plugin.toml");
+//! This crate registers nothing itself but its type's SceneDB attachments
+//! (GPU mirror and clear, handle ledger): the plugin's root crate
+//! (`sprites_plugin`) submits the component class and every registration
+//! above, in one place.
 
 pub mod component;
 
@@ -95,26 +92,23 @@ pulsar_scenedb::pulsar_reflection::inventory::submit! {
     }
 }
 
-fn register_texture_binding() {
+/// Registers how a sprite takes in a loaded image.
+pub fn register_texture_binding() {
     pulsar_scenedb::register_binding::<SpriteComponent>(
         helio_component::texture_assets::TEXTURE_ASSET_KIND,
         bind_sprite_texture,
     );
 }
 
-inventory::submit! {
-    helio_component::texture_assets::TextureBindingRegistration {
-        origin: pulsar_plugins::origin!(),
-        register: register_texture_binding,
-    }
-}
-
-fn register_columns(store: &mut SceneGpuStore, device: &std::sync::Arc<wgpu::Device>) {
+/// Registers the sprites' source-row columns.
+pub fn register_columns(store: &mut SceneGpuStore, device: &std::sync::Arc<wgpu::Device>) {
     // The join places them as the sprite overlay's rows.
     SpriteSourceRow::register_gpu_columns_growable(store, 64, device);
 }
 
-fn derivation(
+/// The sprites' scene rows: the plugin's join from source rows to the
+/// sprite overlay's rows, placed by their owners.
+pub fn derivation(
     device: &wgpu::Device,
     keys: helio_scene_join::RowJoinKeys,
 ) -> Box<dyn helio_scene_join::SceneDerivation> {
@@ -125,25 +119,9 @@ fn derivation(
     ))
 }
 
-inventory::submit! {
-    engine_backend::scene::helio_bridge::SceneRowsRegistration {
-        origin: pulsar_plugins::origin!(),
-        register_columns,
-        derivation,
-    }
-}
-
 /// The sprites' feature: cull, batch and the 2D overlay.
-fn render_features() -> helio_feature_api::FeatureSet {
+pub fn render_features() -> helio_feature_api::FeatureSet {
     helio_feature_api::FeatureSet::new().with(helio_pass_sprite_batch::SpriteFeature)
-}
-
-inventory::submit! {
-    engine_backend::subsystems::render::RenderFeatureRegistration {
-        origin: pulsar_plugins::origin!(),
-        features: render_features,
-        configure: |config| config,
-    }
 }
 
 #[cfg(test)]
@@ -160,17 +138,6 @@ mod tests {
         assert_eq!(
             std::mem::size_of::<helio_pass_sprite_batch::SpriteRow>(),
             20 * 4
-        );
-    }
-
-    #[test]
-    fn registers_its_feature() {
-        let features =
-            engine_backend::subsystems::render::helio_renderer::render_features::plugin_features();
-        assert!(
-            features.ids().contains(&"helio.sprites2d"),
-            "features: {:?}",
-            features.ids()
         );
     }
 }

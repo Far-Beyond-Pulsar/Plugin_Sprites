@@ -5,6 +5,9 @@
 
 use std::sync::Arc;
 
+// The plugin as a game links it: its root, with every registration.
+use sprites_plugin as _;
+
 use engine_backend::scene::{SceneWorldExt, SpawnObject, Transform, Visibility};
 use helio_core::ENTITY_GENERATIONS_KEY;
 use helio_scene_join::{

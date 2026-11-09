@@ -1,6 +1,6 @@
 //! Placing 2D sprites (#1060) in the level editor: the hierarchy's quick-add
-//! button, registered through the level editor's extension points
-//! (`ui_level_editor::extend`).
+//! button, which the plugin's root crate registers through the level
+//! editor's extension points (`ui_level_editor::extend::CreateEntry`).
 //!
 //! A sprite is an object holding a `SpriteComponent`. It draws over the 3D
 //! scene in a 2D screen space of its own (1 unit = 1 pixel, origin at the
@@ -12,7 +12,7 @@
 use sprites_component::SpriteComponent;
 use ui_level_editor::LevelEditorState;
 use ui_level_editor::commands::{CommandResult, TypedComponent};
-use ui_level_editor::extend::{CreateEntry, add_object};
+use ui_level_editor::extend::add_object;
 use ui_level_editor::scene_edit::{ObjectType, Transform};
 
 /// Name of the objects [`create_sprite`] adds.
@@ -38,15 +38,11 @@ pub fn create_sprite(
     )
 }
 
-inventory::submit! {
-    CreateEntry {
-        origin: pulsar_plugins::origin!(),
-        id: "sprite",
-        menu_label: None,
-        environment_label: None,
-        quick_add: Some((|| ui::IconName::Image, "Add 2D Sprite")),
-        offered: None,
-        order: 500,
-        create: |state| create_sprite(state, [0.0, 0.0], SpriteComponent::default()),
-    }
+/// The hierarchy's quick-add button: its icon and tooltip.
+pub const QUICK_ADD: (fn() -> ui::IconName, &str) = (|| ui::IconName::Image, "Add 2D Sprite");
+
+/// What the quick-add button does: a default sprite at the centre of the
+/// view.
+pub fn create_default_sprite(state: &mut LevelEditorState) -> CommandResult {
+    create_sprite(state, [0.0, 0.0], SpriteComponent::default())
 }

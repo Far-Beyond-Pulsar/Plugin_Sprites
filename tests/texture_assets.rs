@@ -10,6 +10,9 @@
 use std::path::Path;
 use std::time::Duration;
 
+// The plugin as a game links it: its root, with every registration.
+use sprites_plugin as _;
+
 use helio_component::texture_assets::{
     LoadedTexture, texture_asset_id, texture_asset_id_of, texture_source_for_file,
 };

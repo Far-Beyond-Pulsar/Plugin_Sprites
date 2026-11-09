@@ -2,11 +2,10 @@
 name = "sprites_component"
 version = "0.1.0"
 edition = "2024"
-description = "2D sprites (pulsar.sprites): the sprite component, its rows and the registrations of the plugin's Helio feature"
+description = "2D sprites (pulsar.sprites): the sprite component, its rows, image binding and scene rows, and the plugin's Helio feature set"
 
-# Hosts (the editor through the plugin crate, the game) link it; the
-# component, its rows, texture binding, scene rows and render feature
-# register through `inventory` once the crate is linked.
+# The plugin's root crate (`sprites_plugin`) links it and submits its
+# component class, texture binding, scene rows and render feature.
 [lib]
 name = "sprites_component"
 
@@ -16,8 +15,6 @@ default = ["gpu"]
 gpu = []
 
 [dependencies]
-# The plugin's descriptor and its registrations' origin.
-pulsar_plugins = { workspace = true }
 engine_class_derive = { workspace = true }
 pulsar_reflection = { workspace = true, features = ["prims-gpui"] }
 gpui-ce = { workspace = true }
@@ -25,31 +22,15 @@ pulsar_scenedb = { workspace = true }
 pulsar_scenedb_derive = { workspace = true }
 pulsar_world_registry = { workspace = true }
 helio_component = { workspace = true }
-# The game's slim feature set (as pulsar_game): linking the plugin must not
-# pull the editor's features into a game build. A path dependency because
-# the workspace table cannot opt out of default features.
-engine_backend = { path = "../../../../crates/core/engine_backend", default-features = false, features = ["render"] }
-inventory = { workspace = true }
 # The engine-class derive logs through it.
 tracing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 bytemuck = { workspace = true, features = ["derive"] }
 wgpu = { workspace = true }
-helio = { workspace = true }
 helio-feature-api = { workspace = true }
 helio-scene-join = { workspace = true }
 helio-pass-sprite-batch = { workspace = true }
-
-[dev-dependencies]
-# A mesh to place their rows by (tests only; the crate links no mesh).
-meshes_component = { workspace = true }
-glam = { workspace = true }
-helio-core = { workspace = true }
-engine_state = { workspace = true }
-image = { workspace = true }
-pollster = "=0.4.0"
-tempfile = { workspace = true }
 
 [lints]
 workspace = true
