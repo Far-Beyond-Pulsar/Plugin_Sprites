@@ -19,16 +19,26 @@ draw phases and api crates.
 
 | Crate | Path | What |
 |---|---|---|
-| `sprites_component` | `component/` | 2D sprites (pulsar.sprites): the sprite component, its rows and the registrations of the plugin's Helio feature |
-| `sprites_plugin` | `editor/` | Sprites (pulsar.sprites): the editor plugin -- its metadata, over the plugin's component crate |
+| `sprites_component` | `component/` | 2D sprites (pulsar.sprites): the sprite component, its rows, image binding and scene rows, and the plugin's Helio feature set |
+| `sprites_plugin` | `.` | Sprites (`pulsar.sprites`): the plugin's root crate, the one place it registers everything it contributes (runtime registrations always, the editor's with `editor`) |
+| `sprites_editor` | `editor/` | Sprites (pulsar.sprites): the editor crate -- the level editor's sprite quick-add, over the plugin's component crate |
 | `sprites-examples` | `examples/` | The sprites plugin's standalone hosts on Helio: 2D sprite demos |
 | `helio-pass-sprite-batch` | `feature/batch/` | Helio 2D pass: GPU-instanced sprite batcher with texture atlasing |
 | `helio-pass-sprite-cull` | `feature/cull/` | Helio 2D pass: GPU compute culling + radix sort for a growable instance pool (paired with helio-pass-sprite-batch, no crate dependency on it) |
 | `helio-pass-radiance-cascades-2d` | `feature/radiance-cascades-2d/` | Helio 2D pass: radiance cascades lighting for sprites |
 | `helio-pass-sprite-simulate` | `feature/simulate/` | Helio 2D pass: GPU compute bounce-physics simulation writing directly into a sprite instance pool (paired with helio-pass-sprite-batch/-cull) |
 
-- **Runtime module** (what a game built for a project links): `sprites_component`.
-- **Editor module** (what the editor links in addition): `sprites_plugin`.
+The root crate (`sprites_plugin`, this directory's package) is the one place
+the plugin registers what it contributes: its component classes, every
+registration that names an origin (`pulsar_plugins::origin!()`) and the
+descriptor. The other crates hold the code and register nothing but their
+types' own attachments, so `src/runtime.rs` (and `src/editor.rs`, with
+the `editor` feature) lists everything the plugin brings. The plugin's
+integration tests (`tests/`) link the root, as a game does.
+
+- **Runtime module** (what a game built for a project links): `sprites_plugin`.
+- **Editor module** (what the editor links in addition): `sprites_plugin` with its
+  `editor` feature (`sprites_editor`).
 - **Requires**: nothing. A project enables or disables the plugin in its
   `Pulsar.toml` (`[plugins]`); disabled, the kind is absent and the frame
   draws without it.
@@ -46,8 +56,8 @@ only inside a Pulsar-Native checkout:
 ```bash
 git clone --recursive https://github.com/Far-Beyond-Pulsar/Pulsar-Native
 cd Pulsar-Native
-cargo check -p sprites_component -p sprites_plugin -p sprites-examples -p helio-pass-sprite-batch -p helio-pass-sprite-cull -p helio-pass-radiance-cascades-2d -p helio-pass-sprite-simulate --tests
-cargo test -p sprites_component -p helio-pass-sprite-batch -p helio-pass-sprite-cull -p helio-pass-radiance-cascades-2d -p helio-pass-sprite-simulate
+cargo check -p sprites_plugin -p sprites_component -p sprites_editor --features sprites_plugin/editor -p sprites-examples -p helio-pass-sprite-batch -p helio-pass-sprite-cull -p helio-pass-radiance-cascades-2d -p helio-pass-sprite-simulate --tests
+cargo test -p sprites_plugin -p sprites_component -p helio-pass-sprite-batch -p helio-pass-sprite-cull -p helio-pass-radiance-cascades-2d -p helio-pass-sprite-simulate
 ```
 
 Suites that render real frames need a GPU; CI leaves them out by name

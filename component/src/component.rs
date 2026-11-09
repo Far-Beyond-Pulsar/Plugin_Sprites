@@ -23,8 +23,7 @@
 //! authored value; the environment join places it as the sprite passes'
 //! `helio_pass_sprite_batch::SpriteRow` row in `"sprite_instances"`.
 
-use engine_class_derive::{engine_class, register_world_component};
-use serde::{Deserialize, Serialize};
+use engine_class_derive::{engine_class, world_component};
 
 /// The class name scripts and level files use.
 pub const SPRITE_CLASS_NAME: &str = "SpriteComponent";
@@ -115,7 +114,7 @@ impl SpriteComponent {
     }
 }
 
-#[register_world_component]
+#[world_component]
 impl SpriteComponent {}
 
 /// The world counts the image `texture` names as a reference of the sprite,
@@ -150,14 +149,6 @@ pub fn bind_sprite_texture(sprite: &mut SpriteComponent, view: &pulsar_scenedb::
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn registers_under_its_class_name() {
-        assert_eq!(
-            pulsar_world_registry::component_id_for_class(SPRITE_CLASS_NAME),
-            Some(pulsar_scenedb::component_id::<SpriteComponent>())
-        );
-    }
 
     #[test]
     fn the_row_carries_the_z_index_frame_and_tint() {
