@@ -1,0 +1,125 @@
+# The sprites plugin's rows of the SceneDB closure ledger (Pulsar-Native#1035):
+# its classes, GPU schemas, buffers, pass crates and call sites. A plugin owns
+# the rows of what it ships (Pulsar-Native#1606); `cargo test -p scene_inventory`
+# in a Pulsar-Native checkout recomputes every fact column, checks the human
+# columns, and fails on a missing, stale or misplaced row. The columns are
+# described in Pulsar-Native's crates/core/scene_inventory/ledger.toml.
+
+# ── Exposed component classes ───────────────────────────────────
+
+[[class]]
+name = "SpriteComponent"
+category = "Rendering"
+world_registered = true
+own_gpu_columns = true
+owner = "sprites_component::component"
+disposition = "render, 2D (#1060). Its derived SpriteSourceRow is written on every insert, write, removal and replay (its image registered in the scene texture store); the environment join gates it on the instance and its owner's visibility and places it into sprite_instances at the owner's X/Y, turned by its roll and scaled by its X/Y scale. The default graphs draw sprites as the final 2D overlay after post-processing, ordered by z_index, with their own orthographic camera (1 unit = 1 output pixel, origin at the view's centre); no 3D pass reads them. The editor places one from the hierarchy (scene_edit::sprite::create_sprite)"
+target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
+test = "plugins/installed/tests/render_acceptance.rs (sprites_draw_in_2d_over_the_3d_scene); plugins/vendor/sprites/tests/scene_rows.rs (sprites_are_placed_in_2d_by_their_owner)"
+status = "verified"
+
+# ── GPU-bearing schemas ─────────────────────────────────────────
+
+[[schema]]
+type = "SpriteSourceRow"
+path = "sprites_component::SpriteSourceRow"
+buffers = ["sprite_sources"]
+clears_on_remove = true
+releases_var_len = false
+registered = true
+writer = "SpriteComponent's derived GPU registration (the pass row at the 2D origin with its image's texture store slot; zero while disabled), on every insert, write, removal and replay"
+owner = "sprites_component"
+disposition = "keep: the environment join's sprite input (#1060)"
+target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
+test = "plugins/installed/tests/render_acceptance.rs (sprites_draw_in_2d_over_the_3d_scene); plugins/vendor/sprites/tests/scene_rows.rs (sprites_are_placed_in_2d_by_their_owner)"
+status = "verified"
+
+[[schema]]
+type = "SpriteComponent"
+path = "sprites_component::component::SpriteComponent"
+buffers = []
+clears_on_remove = true
+releases_var_len = false
+registered = false
+writer = "helio-scene-derivations environment join from SpriteComponent's source rows (#1060)"
+owner = "sprites_component::component"
+disposition = "keep as the pass row layout of sprite_instances; produced by the join (the 2D placement from the owner), not registered as a column"
+target_contract = "Phase 4; 03-gpu-reflection-and-rendering.md"
+test = "plugins/installed/tests/render_acceptance.rs (sprites_draw_in_2d_over_the_3d_scene); plugins/vendor/sprites/tests/scene_rows.rs (sprites_are_placed_in_2d_by_their_owner)"
+status = "verified"
+
+# ── GPU buffer keys ─────────────────────────────────────────────
+
+[[buffer]]
+key = "sprite_instances"
+producers = []
+consumers = ["helio-pass-sprite-batch", "helio-pass-sprite-cull"]
+owner = "helio-scene-derivations environment join (execution output)"
+disposition = "keep: authored 2D sprites, joined on the GPU from sprite_sources and the owner transform/visibility; the default graphs' 2D overlay culls, Z-sorts and draws them after post-processing (#1060)"
+target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
+test = "plugins/installed/tests/render_acceptance.rs (sprites_draw_in_2d_over_the_3d_scene); plugins/vendor/sprites/tests/scene_rows.rs (sprites_are_placed_in_2d_by_their_owner)"
+status = "verified"
+
+[[buffer]]
+key = "sprite_sources"
+producers = ["SpriteSourceRow"]
+consumers = []
+owner = "helio_component::components::environment_rows"
+disposition = "keep: SpriteComponent at the 2D origin, derived on every write; the environment join reads it into sprite_instances"
+target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
+test = "plugins/installed/tests/render_acceptance.rs (sprites_draw_in_2d_over_the_3d_scene); plugins/vendor/sprites/tests/scene_rows.rs (sprites_are_placed_in_2d_by_their_owner)"
+status = "verified"
+
+# ── Render pass crates ──────────────────────────────────────────
+
+[[pass]]
+crate = "helio-pass-radiance-cascades-2d"
+in_default_graph = false
+reads = []
+owner = "helio-presets"
+disposition = "not composed by helio-presets; out of scope until a graph adopts it"
+target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
+test = "none: not in a production graph"
+status = "out-of-scope"
+
+[[pass]]
+crate = "helio-pass-sprite-batch"
+in_default_graph = false
+reads = ["sprite_instances"]
+owner = "helio-presets"
+disposition = "keep: the default graphs' final 2D overlay after post-processing (cull + Z sort, then draw with its own orthographic camera); reads sprite_instances (joined from SpriteComponent, #1060) and records nothing while it holds no sprite"
+target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
+test = "plugins/installed/tests/render_acceptance.rs (sprites_draw_in_2d_over_the_3d_scene); plugins/vendor/sprites/tests/scene_rows.rs (sprites_are_placed_in_2d_by_their_owner)"
+status = "verified"
+
+[[pass]]
+crate = "helio-pass-sprite-cull"
+in_default_graph = false
+reads = ["sprite_instances"]
+owner = "helio-presets"
+disposition = "keep: the default graphs' final 2D overlay after post-processing (cull + Z sort, then draw with its own orthographic camera); reads sprite_instances (joined from SpriteComponent, #1060) and records nothing while it holds no sprite"
+target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
+test = "plugins/installed/tests/render_acceptance.rs (sprites_draw_in_2d_over_the_3d_scene); plugins/vendor/sprites/tests/scene_rows.rs (sprites_are_placed_in_2d_by_their_owner)"
+status = "verified"
+
+[[pass]]
+crate = "helio-pass-sprite-simulate"
+in_default_graph = false
+reads = []
+owner = "helio-presets"
+disposition = "not composed by helio-presets; out of scope until a graph adopts it"
+target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
+test = "none: not in a production graph"
+status = "out-of-scope"
+
+# ── Lifecycle call sites ────────────────────────────────────────
+
+[[site]]
+pattern = "asset-binding"
+file = "plugins/vendor/sprites/component/src/lib.rs"
+count = 1
+owner = "plugins/vendor/sprites/component/src/lib.rs"
+disposition = "keep: the kind's own, moved with it into its plugin (plugin-migration.md Phases B and C)"
+target_contract = "Phase C; plugin-migration.md"
+test = "none: no test names this row; the owning plugin's suites cover its behaviour"
+status = "unverified"
