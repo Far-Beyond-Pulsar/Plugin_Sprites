@@ -28,7 +28,7 @@ inventory::submit! {
         origin: pulsar_plugins::origin!(),
         name: "sprites.rows",
         register_columns: sprites_component::register_columns,
-        derivation: sprites_component::derivation,
+        derivation: Some(sprites_component::derivation),
     }
 }
 
