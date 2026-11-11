@@ -2,45 +2,44 @@
 //! runtime contribution, grouped by the engine seam it plugs into.
 
 use engine_backend::scene::helio_bridge::SceneRowsRegistration;
+use engine_backend::scene::{ClassSpec, ComponentsBuilder};
 use engine_backend::subsystems::render::RenderFeatureRegistration;
 use helio_component::texture_assets::TextureBindingRegistration;
 use sprites_component::SpriteComponent;
 
-// ── Component classes ───────────────────────────────────────────────────────
+/// Everything the sprites plugin registers for a game.
+pub(crate) fn build(p: &mut pulsar_plugins::PluginBuilder) {
+    // ── Component classes ───────────────────────────────────────────────────
 
-pulsar_world_registry::submit_world_component!(SpriteComponent);
+    p.components()
+        .class::<SpriteComponent>(ClassSpec::default());
 
-// ── Rendering ───────────────────────────────────────────────────────────────
+    // ── Rendering ───────────────────────────────────────────────────────────
 
-// Sprite culling, batching and the 2D overlay.
-inventory::submit! {
-    RenderFeatureRegistration {
-        origin: pulsar_plugins::origin!(),
+    // Sprite culling, batching and the 2D overlay.
+    p.add(RenderFeatureRegistration {
+        origin: p.origin(),
         features: sprites_component::render_features,
         configure: |config| config,
-    }
-}
+    });
 
-// The sprites' source rows and the join that places them by their owners as
-// the overlay's rows.
-inventory::submit! {
-    SceneRowsRegistration {
-        origin: pulsar_plugins::origin!(),
+    // The sprites' source rows and the join that places them by their owners
+    // as the overlay's rows.
+    p.add(SceneRowsRegistration {
+        origin: p.origin(),
         name: "sprites.rows",
         register_columns: sprites_component::register_columns,
         derivation: Some(sprites_component::derivation),
-    }
-}
+    });
 
-// ── Assets ──────────────────────────────────────────────────────────────────
+    // ── Assets ──────────────────────────────────────────────────────────────
 
-// A sprite takes in its loaded image.
-inventory::submit! {
-    TextureBindingRegistration {
-        origin: pulsar_plugins::origin!(),
+    // A sprite takes in its loaded image.
+    p.add(TextureBindingRegistration {
+        origin: p.origin(),
         name: "sprites.textures",
         register: sprites_component::register_texture_binding,
-    }
+    });
 }
 
 #[cfg(test)]

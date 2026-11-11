@@ -4,12 +4,13 @@
 use sprites_editor::level_editor;
 use ui_level_editor::extend::CreateEntry;
 
-// ── Level editor ────────────────────────────────────────────────────────────
+/// Everything the sprites plugin registers for the editor.
+pub(crate) fn build(p: &mut pulsar_plugins::PluginBuilder) {
+    // ── Level editor ────────────────────────────────────────────────────────
 
-// The hierarchy's quick-add: a default sprite at the centre of the view.
-inventory::submit! {
-    CreateEntry {
-        origin: pulsar_plugins::origin!(),
+    // The hierarchy's quick-add: a default sprite at the centre of the view.
+    p.add(CreateEntry {
+        origin: p.origin(),
         id: "sprite",
         menu_label: None,
         environment_label: None,
@@ -17,5 +18,5 @@ inventory::submit! {
         offered: None,
         order: 500,
         create: level_editor::create_default_sprite,
-    }
+    });
 }

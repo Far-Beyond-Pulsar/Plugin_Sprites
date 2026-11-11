@@ -6,7 +6,13 @@ id = "pulsar.sprites"
 name = "Sprites"
 description = "2D sprites drawn over the scene: their component, rows, image binding and the renderer feature that culls, batches and draws them"
 enabled_by_default = true
-requires = []
+provides = [
+  { id = "pulsar.sprites.rows", kind = "buffer", members = ["sprite_instances"] },
+]
+# Optional: sprite materials bind through the materials' api when present.
+requires = [
+  { id = "pulsar.materials.api", optional = true },
+]
 
 # The plugin's root crate (the package in this directory): the one place it
 # registers everything it contributes. A game links it without its `editor`
