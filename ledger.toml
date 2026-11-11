@@ -63,7 +63,7 @@ status = "verified"
 [[buffer]]
 key = "sprite_sources"
 producers = ["SpriteSourceRow"]
-consumers = []
+consumers = ["sprites_component"]
 owner = "helio_component::components::environment_rows"
 disposition = "keep: SpriteComponent at the 2D origin, derived on every write; the environment join reads it into sprite_instances"
 target_contract = "Phase 4; 09-component-structure-and-graph-boundary.md"
