@@ -26,6 +26,7 @@ impl Feature for SpriteFeature {
             helio_core::graph::type_name_of::<SpriteCullPass>(),
             helio_core::graph::type_name_of::<SpriteBatchPass>(),
         ]);
+        registrar.consumes(crate::SPRITE_INSTANCES);
         // The culler and the batcher hand each other buffers and are one unit.
         registrar.node(
             pass_node(
