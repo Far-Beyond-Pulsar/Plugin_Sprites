@@ -976,10 +976,6 @@ fn scene_overlay_source(material_binding: helio_mats::MaterialBindingConfig) -> 
                 material_binding.max_textures
             ),
         )
-        .replace(
-            "binding_array<sampler, 256>",
-            &format!("binding_array<sampler, {}>", material_binding.max_textures),
-        )
     } else {
         helio_mats::apply_webgpu_decal_bindings(src, material_binding.max_textures)
     }
@@ -1204,7 +1200,7 @@ impl RenderPass for SpriteBatchPass {
                     &mut entries,
                     0,
                     textures.texture_views,
-                    textures.samplers,
+                    textures.sampler,
                 );
                 overlay.textures_bg =
                     Some(ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {

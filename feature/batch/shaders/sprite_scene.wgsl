@@ -17,8 +17,8 @@ struct SpriteCamera {
 @group(0) @binding(3) var<storage, read> instances: array<SpriteInstance>;
 @group(0) @binding(4) var<storage, read> draw_order: array<u32>;
 
-@group(1) @binding(0) var scene_textures: binding_array<texture_2d<f32>, 256>;
-@group(1) @binding(1) var scene_samplers: binding_array<sampler, 256>;
+@group(1) @binding(0) var scene_sampler:  sampler;
+@group(1) @binding(1) var scene_textures: binding_array<texture_2d<f32>, 256>;
 
 const NO_TEXTURE: u32 = 0xffffffffu;
 
@@ -53,7 +53,7 @@ fn vs_main(v: VertexIn, @builtin(instance_index) instance_index: u32) -> VOut {
 }
 
 fn sample_sprite_texture(texture_index: u32, uv: vec2<f32>) -> vec4<f32> {
-    return textureSampleLevel(scene_textures[texture_index], scene_samplers[texture_index], uv, 0.0);
+    return textureSampleLevel(scene_textures[texture_index], scene_sampler, uv, 0.0);
 }
 
 @fragment
