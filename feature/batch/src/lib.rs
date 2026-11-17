@@ -1077,8 +1077,14 @@ impl RenderPass for SpriteBatchPass {
             let [cx, cy] = self.camera_center;
             let [hx, hy] = half_extent;
             // Y-up world space; a Y-down convention would swap `cy - hy`/`cy + hy`.
-            let view_proj =
-                glam::Mat4::orthographic_rh(cx - hx, cx + hx, cy - hy, cy + hy, -1.0, 1.0);
+            let view_proj = glam::camera::rh::proj::directx::orthographic(
+                cx - hx,
+                cx + hx,
+                cy - hy,
+                cy + hy,
+                -1.0,
+                1.0,
+            );
             let uniform = SpriteCamera {
                 view_proj: view_proj.to_cols_array_2d(),
             };
