@@ -249,7 +249,6 @@ pub struct RadianceCascades2DPass {
     scene_w: u32,
     scene_h: u32,
     cascade_count: u32,
-    jfa_passes: u32,
 
     occupancy_dims: (u32, u32),
     occupancy_cell_size: f32,
@@ -720,7 +719,6 @@ impl RadianceCascades2DPass {
             scene_w,
             scene_h,
             cascade_count,
-            jfa_passes,
             occupancy_dims,
             occupancy_cell_size,
             occupancy_origin,
@@ -775,7 +773,7 @@ impl RenderPass for RadianceCascades2DPass {
         _target: &'a wgpu::TextureView,
         _depth: &'a wgpu::TextureView,
         _resources: &'a helio_core::ResourceRegistry<'a>,
-        storage: &'a mut helio_core::RenderFrameStorage,
+        _storage: &'a mut helio_core::RenderFrameStorage,
     ) -> Option<wgpu::RenderPassDescriptor<'a>> {
         None // compute-only pass
     }

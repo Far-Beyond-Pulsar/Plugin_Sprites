@@ -25,7 +25,7 @@
 //! Rendering is the same GPU cull + radix-sort → batch pipeline as the other
 //! sprite demos (`SpriteCullPass` → `SpriteBatchPass`) — the terrain alone is
 //! ~5,500 instanced quads, inserted once at startup; only the player, the
-//! animated critters/items, the in-progress crack overlay, the hotbar icons,
+//! animated critters, the in-progress crack overlay, the hotbar icons,
 //! and the parallax sky re-upload their instance bytes after that.
 
 use std::collections::{HashMap, HashSet};
@@ -152,7 +152,6 @@ const MARKET_CLUTTER: &[&str] = &["bush_c", "bush_d"];
 enum Animated {
     None,
     Critter,
-    Item,
 }
 
 fn surface_row(col: i32) -> i32 {
@@ -423,25 +422,6 @@ fn trim_content(img: &RgbaImage) -> Option<RgbaImage> {
     ))
 }
 
-fn avg_color(img: &RgbaImage) -> (u32, u32, u32) {
-    let (w, h) = img.dimensions();
-    let (mut r, mut g, mut b, mut n) = (0u64, 0u64, 0u64, 0u64);
-    for y in 0..h {
-        for x in 0..w {
-            let p = img.get_pixel(x, y);
-            if p[3] > 0 {
-                r += p[0] as u64;
-                g += p[1] as u64;
-                b += p[2] as u64;
-                n += 1;
-            }
-        }
-    }
-    if n == 0 {
-        return (0, 0, 0);
-    }
-    ((r / n) as u32, (g / n) as u32, (b / n) as u32)
-}
 #[derive(Clone, Copy)]
 enum SliceSpec {
     /// A regular `cols × rows` grid of `cell_w × cell_h` cells. Empty cells
@@ -610,7 +590,7 @@ fn slice_spec(path: &str) -> SliceSpec {
             group: Some("snail"),
             key: "dead",
         },
-        // ── 16px terrain tileset (classified by color in `classify_tiles`). ─
+        // ── 16px terrain tileset. ─────────────────────────────────────────
         "Assets/Tiles" => Grid {
             cell_w: 16,
             cell_h: 16,
@@ -762,51 +742,6 @@ fn slice_sheets(sheets: Vec<(String, RgbaImage)>) -> SliceOutput {
     SliceOutput { frames, anims }
 }
 
-/// Picks the best terrain tile per class (grass/dirt/stone/water) by
-/// nearest-color match and renames those frames to `tile_grass` etc.
-fn classify_tiles(frames: &mut Vec<(String, RgbaImage)>) {
-    const TARGETS: [(&str, (u32, u32, u32)); 4] = [
-        ("tile_grass", (110, 130, 4)),
-        ("tile_dirt", (135, 108, 55)),
-        ("tile_stone", (112, 124, 132)),
-        ("tile_water", (50, 140, 176)),
-    ];
-    let mut best: [Option<(usize, u64)>; 4] = [None; 4];
-    for (i, (name, img)) in frames.iter().enumerate() {
-        if !name.starts_with("tile_") || name.contains(' ') {
-            continue;
-        }
-        // Require a reasonably filled tile so the avg color is meaningful.
-        let (w, h) = img.dimensions();
-        let mut opaque = 0u32;
-        for y in 0..h {
-            for x in 0..w {
-                if img.get_pixel(x, y)[3] > 0 {
-                    opaque += 1;
-                }
-            }
-        }
-        if opaque < 60 {
-            continue;
-        }
-        let (r, g, b) = avg_color(img);
-        for (ti, (_, (tr, tg, tb))) in TARGETS.iter().enumerate() {
-            let dr = r as i64 - *tr as i64;
-            let dg = g as i64 - *tg as i64;
-            let db = b as i64 - *tb as i64;
-            let dist = (dr * dr + dg * dg + db * db) as u64;
-            if best[ti].map(|(_, d)| dist < d).unwrap_or(true) {
-                best[ti] = Some((i, dist));
-            }
-        }
-    }
-    for (i, (class, _)) in TARGETS.iter().enumerate() {
-        if let Some((fi, _)) = best[i] {
-            frames[fi].0 = class.to_string();
-        }
-    }
-}
-
 // ── Breakable world objects ──────────────────────────────────────────────
 
 #[derive(Clone)]
@@ -918,7 +853,6 @@ fn scatter_band(
     objects: &mut HashMap<SpriteHandle, Breakable>,
     rng: &mut Rng,
     critters: &mut Vec<Critter>,
-    items: &mut Vec<Item>,
     col_start: i32,
     col_end: i32,
     step: (i32, i32),
@@ -988,33 +922,6 @@ fn scatter_band(
                     phase: rng.next_f32() * std::f32::consts::TAU,
                     frames: frames.clone(),
                     fps: anim_fps(name),
-                });
-            }
-            Animated::Item => {
-                let s = atlas[name];
-                let base_pos = [x, top + s.h * 0.5 + 10.0];
-                let handle = scene.insert_sprite(
-                    SpriteInstance::new(base_pos, [s.w, s.h])
-                        .with_uv_rect(s.uv)
-                        .with_depth(depth)
-                        .with_atlas_layer(atlas_layer),
-                );
-                objects.insert(
-                    handle,
-                    Breakable {
-                        pos: base_pos,
-                        size: [s.w, s.h],
-                        depth,
-                        name: name.to_string(),
-                        terrain_cell: None,
-                    },
-                );
-                items.push(Item {
-                    handle,
-                    base_pos,
-                    phase: rng.next_f32() * std::f32::consts::TAU,
-                    spin: rng.range_i32(-100, 100) as f32 / 100.0,
-                    spr: s,
                 });
             }
         }
@@ -1129,14 +1036,6 @@ struct Critter {
     fps: f32,
 }
 
-struct Item {
-    handle: SpriteHandle,
-    base_pos: [f32; 2],
-    phase: f32,
-    spin: f32,
-    spr: PackedSprite,
-}
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum PlayerAnim {
     Idle,
@@ -1181,7 +1080,6 @@ struct AppState {
     mouse_pos: (f64, f64),
 
     critters: Vec<Critter>,
-    items: Vec<Item>,
 
     objects: HashMap<SpriteHandle, Breakable>,
     broken_terrain: HashSet<(i32, i32)>,
@@ -1427,7 +1325,6 @@ impl ApplicationHandler for App {
 
         let mut rng = Rng::new(0xC0FF_EE12_3456_7890);
         let mut critters: Vec<Critter> = Vec::new();
-        let mut items: Vec<Item> = Vec::new();
 
         // ── Zone boundaries (columns) — each themed band gets its own
         // sprites, so the world reads as "a forest, then a lake, then a
@@ -1453,7 +1350,6 @@ impl ApplicationHandler for App {
                     &mut objects,
                     &mut rng,
                     &mut critters,
-                    &mut items,
                     $start,
                     $end,
                     $step,
@@ -1788,7 +1684,6 @@ impl ApplicationHandler for App {
             keys: HashSet::new(),
             mouse_pos: (0.0, 0.0),
             critters,
-            items,
             objects,
             broken_terrain: HashSet::new(),
             breaking: None,
@@ -1965,7 +1860,6 @@ impl ApplicationHandler for App {
                     }
                     state.objects.remove(&breaking.handle);
                     state.critters.retain(|c| c.handle != breaking.handle);
-                    state.items.retain(|it| it.handle != breaking.handle);
                     if let Some(cell) = breaking.target.terrain_cell {
                         state.broken_terrain.insert(cell);
                         // Clear the same tile in the lighting occupancy grid
@@ -2101,18 +1995,6 @@ impl ApplicationHandler for App {
                         c.handle,
                         SpriteInstance::new(pos, [spr.w, spr.h])
                             .with_uv_rect(spr.uv)
-                            .with_depth(0.3)
-                            .with_atlas_layer(atlas_layer),
-                    );
-                }
-                for it in &state.items {
-                    let mut pos = it.base_pos;
-                    pos[1] += (time * 1.5 + it.phase).sin() * 4.0;
-                    state.scene.update_sprite(
-                        it.handle,
-                        SpriteInstance::new(pos, [it.spr.w, it.spr.h])
-                            .with_uv_rect(it.spr.uv)
-                            .with_rotation(time * it.spin + it.phase)
                             .with_depth(0.3)
                             .with_atlas_layer(atlas_layer),
                     );

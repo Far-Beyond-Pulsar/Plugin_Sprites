@@ -21,6 +21,9 @@ use helio_pass_sprite_batch::{SpriteBatchPass, SpriteHandle, SpriteInstance};
 use helio_pass_sprite_cull::SpriteCullPass;
 
 mod common;
+// Shared with the authoring demos; this one only holds the adapter, so the
+// sprite-authoring half of it is unused here.
+#[allow(dead_code)]
 mod sprite_scene_input;
 use sprite_scene_input::SceneInputAdapter;
 
