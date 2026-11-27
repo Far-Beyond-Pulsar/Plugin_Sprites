@@ -3,7 +3,7 @@ name = "helio-pass-sprite-batch"
 version = "0.1.0"
 edition = "2021"
 description = "Helio 2D pass: GPU-instanced sprite batcher with texture atlasing"
-license = "MIT OR Apache-2.0"
+license = "MPL-2.0"
 
 [dependencies]
 helio-scene-join = { workspace = true }
