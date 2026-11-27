@@ -55,7 +55,7 @@ fn set_texture(world: &mut World, entity: Entity, path: &str) {
         world,
         entity,
         "texture",
-        Box::new(path.to_string()),
+        Box::new(helio_component::asset_paths::TexturePath::from(path)),
     )
     .unwrap_or_else(|_| panic!("texture write to {path} refused"));
 }

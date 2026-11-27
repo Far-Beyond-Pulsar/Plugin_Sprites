@@ -36,7 +36,7 @@ pub struct SpriteComponent {
     pub enabled: bool,
     /// Image to draw (project-relative path). Empty: the tint alone.
     #[property(category = "Sprite")]
-    pub texture: String,
+    pub texture: helio_component::asset_paths::TexturePath,
     /// Straight-alpha tint, multiplied with the image (or drawn alone).
     #[property(category = "Sprite")]
     pub tint: [f32; 4],
@@ -68,7 +68,7 @@ impl Default for SpriteComponent {
     fn default() -> Self {
         Self {
             enabled: true,
-            texture: String::new(),
+            texture: Default::default(),
             tint: [1.0, 1.0, 1.0, 1.0],
             width: 64.0,
             height: 64.0,
