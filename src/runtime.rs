@@ -14,6 +14,18 @@ pub(crate) fn build(p: &mut pulsar_plugins::PluginBuilder) {
     p.components()
         .class::<SpriteComponent>(ClassSpec::default());
 
+    // What a new component's texture choice starts as: the project's.
+    p.add(pulsar_settings::project::ProjectSettingsRegistration {
+        origin: p.origin(),
+        name: "sprites.textures_settings",
+        register: sprites_component::register_texture_settings,
+    });
+    p.add(helio_component::asset_component::NewComponentRegistration {
+        origin: p.origin(),
+        class_name: sprites_component::SPRITE_CLASS_NAME,
+        seed: sprites_component::seed_new,
+    });
+
     // ── Rendering ───────────────────────────────────────────────────────────
 
     // Sprite culling, batching and the 2D overlay.
@@ -74,10 +86,9 @@ mod tests {
             .into_iter()
             .filter(|summary| summary.origin == pulsar_plugins::origin!())
             .collect();
-        assert!(
-            ours.iter()
-                .any(|summary| summary.category == "component.class")
-        );
+        assert!(ours
+            .iter()
+            .any(|summary| summary.category == "component.class"));
         for summary in &ours {
             assert_eq!(
                 pulsar_plugins::plugin_of(summary.origin).map(|plugin| plugin.id.as_str()),

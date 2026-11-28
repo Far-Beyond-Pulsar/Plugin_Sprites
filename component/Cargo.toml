@@ -21,6 +21,7 @@ pulsar_scenedb = { workspace = true }
 pulsar_scenedb_derive = { workspace = true }
 pulsar_world_registry = { workspace = true }
 helio_component = { workspace = true }
+engine_state = { workspace = true }
 # The engine-class derive logs through it.
 tracing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

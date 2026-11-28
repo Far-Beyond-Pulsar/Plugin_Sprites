@@ -60,6 +60,7 @@ fn sprite_dispatch(mirror: &GpuMirrorHandle, row: u32, data: *const (), is_new_i
         helio_component::texture_assets::texture_slot(
             &sprite.image,
             &sprite.texture,
+            sprite.texture_options(),
             mirror,
             "sprite",
         )
